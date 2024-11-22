@@ -2,16 +2,18 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AppContext } from '../contexts/AppContext'
 import { assets } from '../assets/assets_frontend/assets'
+import RelatedDoc from '../component/RelatedDoc'
 
 const Appointment = () => {
 
   const {docId} = useParams()
   const {doctors, currencysymbol} = useContext(AppContext)
+  const daysOfWeek = ['sun', 'MON', 'TUE', 'WED', 'THU', 'RFI', 'SAT' ]
 
 const [docInfo, setDdocInfo] = useState(null)
 const [doctorslot, setDoctorslot] = useState([]);
 const [slotIndex, setSlotIndex] = useState(0);
-const [slotTime, setSlotTime] = useState("")
+const [slotTime, setSlotTime] = useState(0)
 
   const fetchdocinfo = async () =>{
     const docInfo = doctors.find(doc => doc._id === docId)
@@ -24,7 +26,7 @@ const getavilableSlot = async()=>{
    setDoctorslot([])
 
   //  geting current date 
-  let day = new Date()
+  let today = new Date()
 
   for (let i = 0;  i< 7; i++) {
      let currentDate = new Date(today)
@@ -32,7 +34,7 @@ const getavilableSlot = async()=>{
 
     //  setting end time of the date with index 
      let endTime = new Date()
-     endTime.setDate(today.getDate()+1)
+     endTime.setDate(today.getDate()+i)
      endTime.setHours(21,0,0,0)     
 
     //  setting hours 
@@ -58,7 +60,7 @@ const getavilableSlot = async()=>{
       // increment current time by 30 minute 
       currentDate.setMinutes(currentDate.getMinutes() + 30)
     }
-    setDoctorslot(prev => ([]))
+    setDoctorslot(prev => ([...prev, timeSlot]))
   }
 }
 
@@ -70,6 +72,11 @@ const getavilableSlot = async()=>{
   useEffect(()=>{
  getavilableSlot()
   },[docInfo])
+
+  useEffect(()=>{
+    console.log(doctorslot);
+    
+  }, [doctorslot])
   return docInfo && (
     <div>
       {/* doctors details  */}
@@ -99,6 +106,40 @@ const getavilableSlot = async()=>{
        </div>
 
       </div>
+      {/* BOOKING TIME  */}
+      <div className='sm:ml-72 sm:pl-4 mt-4 font-medium text-gray-700'>
+        <p>Booking Slots</p>
+        <div className='flex gap-3 items-center w-full overflow-x-scroll mt-4'>
+          {
+            doctorslot.length && doctorslot.map((items, i)=>(
+              <div onClick={()=>setSlotIndex(i)} className={`text-center py-6 min-w-16 rounded-full 
+                cursor-pointer ${slotIndex === i ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white' 
+                : 'border border-gray-200' }`} key={i}>
+                <p>{items[0] && daysOfWeek[items[0].datetime.getDay()]}</p>
+                <p>{items[0] && items[0].datetime.getDate()}</p>
+              </div>
+            ))
+          }
+        </div>
+
+        <div className='flex items-center gap-3 w-full overflow-x-scroll mt-4'>
+          {
+            doctorslot.length && doctorslot[slotIndex].map((items,i)=>(
+              <p onClick={()=>setSlotTime(items.time)} className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer
+              ${items.time === slotTime ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white' : 
+                'text-gray-400 border border-gray-300'
+              } `} key={i}>
+                {items.time.toLowerCase()}
+              </p>
+            ))
+          }
+        </div>
+        <button className='bg-gradient-to-r from-green-400 to-blue-500 text-sm text-white py-2 
+        mt-4 rounded-full px-6'>Book an appointment</button>
+      </div>
+
+      {/* list of RelatedDocs  */}
+      <RelatedDoc docId={docId} speciality={docInfo.speciality}/>
     </div>
   )
 }
